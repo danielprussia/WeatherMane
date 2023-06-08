@@ -1,29 +1,25 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { callApi } from './api';
 
 function WeatherComponent() {
   const [city, setCity] = useState(''); // State for the city search query
-  const [temperature, setTemperature] = useState(null); // State for the temperature
+  const [temperatures, setTemperatures] = useState([]); // State for the temperatures
 
-  useEffect(() => {
+  const handleSearch = () => {
     if (city !== '') {
       callApi(city)
         .then(data => {
-          // Retrieve the temperature from the API response
-          const temperature = data.list[0].main.temp;
-          setTemperature(temperature);
+          // Retrieve the temperatures from the API response for the next 5 days
+          const tempData = data.list.slice(0, 5).map(item => item.main.temp);
+          setTemperatures(tempData);
         })
         .catch(error => {
           // Handle any errors
           console.error('API Error:', error);
         });
+    } else {
+      setTemperatures([]); // Reset temperatures to empty array if no city is entered
     }
-  }, [city]);
-
-  const handleSearch = () => {
-    // Call the API when the search button is clicked
-    setTemperature(null); // Reset temperature to null before new search
-    // You can add additional validation or error handling for the city input here if needed
   };
 
   return (
@@ -35,8 +31,15 @@ function WeatherComponent() {
         placeholder="Enter a city"
       />
       <button onClick={handleSearch}>Search</button>
-      {temperature !== null ? (
-        <p>Temperature: {temperature}°F</p>
+      {temperatures.length > 0 ? (
+        <div>
+          <h3>5-Day Weather Forecast</h3>
+          <ul>
+            {temperatures.map((temp, index) => (
+              <li key={index}>Day {index + 1}: {temp}°F</li>
+            ))}
+          </ul>
+        </div>
       ) : (
         <p>No temperature data available</p>
       )}
